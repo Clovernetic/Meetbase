@@ -78,9 +78,7 @@ pub async fn start_recording(
     let title = title
         .map(|t| t.trim().to_string())
         .filter(|t| !t.is_empty())
-        .unwrap_or_else(|| {
-            format!("Meeting {}", chrono::Local::now().format("%Y-%m-%d %H:%M"))
-        });
+        .unwrap_or_else(|| format!("Meeting {}", chrono::Local::now().format("%Y-%m-%d %H:%M")));
     let meeting_id = uuid::Uuid::new_v4().to_string();
     let meeting = db::create_meeting(
         &state.pool,

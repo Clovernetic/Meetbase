@@ -1,6 +1,8 @@
 //! Conversion of arbitrary capture formats to the pipeline's 16 kHz mono f32.
 
-use rubato::{Resampler, SincFixedIn, SincInterpolationParameters, SincInterpolationType, WindowFunction};
+use rubato::{
+    Resampler, SincFixedIn, SincInterpolationParameters, SincInterpolationType, WindowFunction,
+};
 
 use crate::error::{CoreError, Result};
 
@@ -109,7 +111,9 @@ impl StreamResampler {
     fn input_block_rate(&self) -> f64 {
         // Derive the input rate back from the configured ratio.
         match &self.inner {
-            Some(r) => self.block_size as f64 / r.output_frames_next() as f64 * PIPELINE_SAMPLE_RATE as f64,
+            Some(r) => {
+                self.block_size as f64 / r.output_frames_next() as f64 * PIPELINE_SAMPLE_RATE as f64
+            }
             None => PIPELINE_SAMPLE_RATE as f64,
         }
     }

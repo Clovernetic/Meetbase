@@ -28,7 +28,12 @@ pub fn decode_to_pipeline_format(path: &Path) -> Result<Vec<f32>> {
     }
 
     let probed = symphonia::default::get_probe()
-        .format(&hint, mss, &FormatOptions::default(), &MetadataOptions::default())
+        .format(
+            &hint,
+            mss,
+            &FormatOptions::default(),
+            &MetadataOptions::default(),
+        )
         .map_err(|e| CoreError::AudioDecode(format!("unrecognized media format: {e}")))?;
     let mut format = probed.format;
 
@@ -85,7 +90,9 @@ pub fn decode_to_pipeline_format(path: &Path) -> Result<Vec<f32>> {
         out.extend(rs.finish()?);
     }
     if out.is_empty() {
-        return Err(CoreError::AudioDecode("file contained no audio samples".into()));
+        return Err(CoreError::AudioDecode(
+            "file contained no audio samples".into(),
+        ));
     }
     Ok(out)
 }
@@ -108,7 +115,8 @@ mod tests {
         };
         let mut writer = hound::WavWriter::create(&path, spec).unwrap();
         for i in 0..44_100 {
-            let s = (0.4 * (2.0 * std::f32::consts::PI * 440.0 * i as f32 / 44_100.0).sin()
+            let s = (0.4
+                * (2.0 * std::f32::consts::PI * 440.0 * i as f32 / 44_100.0).sin()
                 * i16::MAX as f32) as i16;
             writer.write_sample(s).unwrap(); // L
             writer.write_sample(s).unwrap(); // R

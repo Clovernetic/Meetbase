@@ -85,15 +85,13 @@ pub async fn create_meeting(
     source: &str,
     language: Option<&str>,
 ) -> Result<Meeting> {
-    sqlx::query(
-        "INSERT INTO meetings (id, title, source, language) VALUES (?, ?, ?, ?)",
-    )
-    .bind(id)
-    .bind(title)
-    .bind(source)
-    .bind(language)
-    .execute(pool)
-    .await?;
+    sqlx::query("INSERT INTO meetings (id, title, source, language) VALUES (?, ?, ?, ?)")
+        .bind(id)
+        .bind(title)
+        .bind(source)
+        .bind(language)
+        .execute(pool)
+        .await?;
     get_meeting(pool, id).await
 }
 
@@ -358,8 +356,12 @@ mod tests {
     #[tokio::test]
     async fn segments_are_ordered_and_cascade_deleted() {
         let pool = test_pool().await;
-        create_meeting(&pool, "m1", "T", "live", None).await.unwrap();
-        insert_segment(&pool, "m1", 5000, 6000, "second").await.unwrap();
+        create_meeting(&pool, "m1", "T", "live", None)
+            .await
+            .unwrap();
+        insert_segment(&pool, "m1", 5000, 6000, "second")
+            .await
+            .unwrap();
         insert_segment(&pool, "m1", 0, 1000, "first").await.unwrap();
 
         let segs = list_segments(&pool, "m1").await.unwrap();
@@ -373,12 +375,18 @@ mod tests {
     #[tokio::test]
     async fn search_matches_title_and_transcript_with_snippet() {
         let pool = test_pool().await;
-        create_meeting(&pool, "m1", "Budget review", "live", None).await.unwrap();
-        create_meeting(&pool, "m2", "Standup", "live", None).await.unwrap();
+        create_meeting(&pool, "m1", "Budget review", "live", None)
+            .await
+            .unwrap();
+        create_meeting(&pool, "m2", "Standup", "live", None)
+            .await
+            .unwrap();
         insert_segment(&pool, "m2", 0, 1000, "we discussed the budget overrun")
             .await
             .unwrap();
-        create_meeting(&pool, "m3", "1:1", "live", None).await.unwrap();
+        create_meeting(&pool, "m3", "1:1", "live", None)
+            .await
+            .unwrap();
 
         let hits = list_meetings(&pool, Some("budget")).await.unwrap();
         assert_eq!(hits.len(), 2);
@@ -395,7 +403,9 @@ mod tests {
     #[tokio::test]
     async fn like_wildcards_in_search_are_escaped() {
         let pool = test_pool().await;
-        create_meeting(&pool, "m1", "All hands", "live", None).await.unwrap();
+        create_meeting(&pool, "m1", "All hands", "live", None)
+            .await
+            .unwrap();
         // `%` must not act as match-anything.
         let hits = list_meetings(&pool, Some("%")).await.unwrap();
         assert!(hits.is_empty());
@@ -404,10 +414,20 @@ mod tests {
     #[tokio::test]
     async fn summaries_roundtrip() {
         let pool = test_pool().await;
-        create_meeting(&pool, "m1", "T", "live", None).await.unwrap();
-        insert_summary(&pool, "m1", "standard", "Polish", "## Summary\n…", "ollama", "llama3.2")
+        create_meeting(&pool, "m1", "T", "live", None)
             .await
             .unwrap();
+        insert_summary(
+            &pool,
+            "m1",
+            "standard",
+            "Polish",
+            "## Summary\n…",
+            "ollama",
+            "llama3.2",
+        )
+        .await
+        .unwrap();
         let sums = list_summaries(&pool, "m1").await.unwrap();
         assert_eq!(sums.len(), 1);
         assert_eq!(sums[0].template_id, "standard");
@@ -419,6 +439,9 @@ mod tests {
         assert!(get_setting(&pool, "k").await.unwrap().is_none());
         set_setting(&pool, "k", "v1").await.unwrap();
         set_setting(&pool, "k", "v2").await.unwrap();
-        assert_eq!(get_setting(&pool, "k").await.unwrap().as_deref(), Some("v2"));
+        assert_eq!(
+            get_setting(&pool, "k").await.unwrap().as_deref(),
+            Some("v2")
+        );
     }
 }

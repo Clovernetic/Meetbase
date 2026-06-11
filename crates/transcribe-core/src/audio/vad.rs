@@ -143,7 +143,9 @@ mod tests {
         let mut vad = EnergyVad::default();
         // Constant fan noise at moderate level: after adaptation it must be
         // classified as silence, not speech.
-        let noise: Vec<f32> = (0..FRAME_SAMPLES).map(|i| 0.01 * ((i * 7919 % 65_536) as f32 / 32_768.0 - 1.0)).collect();
+        let noise: Vec<f32> = (0..FRAME_SAMPLES)
+            .map(|i| 0.01 * ((i * 7919 % 65_536) as f32 / 32_768.0 - 1.0))
+            .collect();
         // ~9 s of constant noise — well above the adaptation time constant.
         for _ in 0..300 {
             vad.classify(&noise);

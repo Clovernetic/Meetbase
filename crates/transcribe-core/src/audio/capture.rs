@@ -30,9 +30,7 @@ pub struct CaptureHandle {
 /// Lists input device names, default first.
 pub fn list_input_devices() -> Result<Vec<String>> {
     let host = cpal::default_host();
-    let default_name = host
-        .default_input_device()
-        .and_then(|d| d.name().ok());
+    let default_name = host.default_input_device().and_then(|d| d.name().ok());
     let mut names: Vec<String> = host
         .input_devices()
         .map_err(|e| CoreError::AudioDevice(e.to_string()))?
@@ -124,9 +122,7 @@ pub fn start_microphone(
 
 /// Starts system-audio (loopback) capture where the platform supports it.
 #[cfg(target_os = "windows")]
-pub fn start_system_audio(
-    mut sink: impl FnMut(&[f32]) + Send + 'static,
-) -> Result<CaptureHandle> {
+pub fn start_system_audio(mut sink: impl FnMut(&[f32]) + Send + 'static) -> Result<CaptureHandle> {
     // WASAPI loopback: open the default *output* device as an input stream.
     let host = cpal::default_host();
     let device = host
@@ -168,9 +164,7 @@ pub fn start_system_audio(
 
 /// System-audio capture is not yet wired on this platform; see module docs.
 #[cfg(not(target_os = "windows"))]
-pub fn start_system_audio(
-    _sink: impl FnMut(&[f32]) + Send + 'static,
-) -> Result<CaptureHandle> {
+pub fn start_system_audio(_sink: impl FnMut(&[f32]) + Send + 'static) -> Result<CaptureHandle> {
     Err(CoreError::AudioDevice(
         "system-audio capture is not yet supported on this platform".into(),
     ))

@@ -147,7 +147,8 @@ impl SpeechChunker {
                     self.trailing_silence_frames = 0;
                 }
 
-                let silence_cut = self.trailing_silence_frames >= self.frames_for(self.config.silence_to_cut);
+                let silence_cut =
+                    self.trailing_silence_frames >= self.frames_for(self.config.silence_to_cut);
                 let max_cut = self.current.len() >= self.samples_for(self.config.max_chunk);
                 if silence_cut || max_cut {
                     self.cut_current()
@@ -232,7 +233,11 @@ mod tests {
         );
         c.push(&silence(1.0));
         let chunks = c.push(&tone(12.0));
-        assert!(chunks.len() >= 2, "long speech must be force-cut, got {}", chunks.len());
+        assert!(
+            chunks.len() >= 2,
+            "long speech must be force-cut, got {}",
+            chunks.len()
+        );
         for ch in &chunks {
             assert!(ch.duration().as_secs_f64() <= 5.1);
         }

@@ -35,7 +35,10 @@ pub enum AppError {
 pub type Result<T> = std::result::Result<T, AppError>;
 
 impl Serialize for AppError {
-    fn serialize<S: serde::Serializer>(&self, serializer: S) -> std::result::Result<S::Ok, S::Error> {
+    fn serialize<S: serde::Serializer>(
+        &self,
+        serializer: S,
+    ) -> std::result::Result<S::Ok, S::Error> {
         use serde::ser::SerializeStruct;
         let mut s = serializer.serialize_struct("AppError", 1)?;
         s.serialize_field("message", &self.to_string())?;

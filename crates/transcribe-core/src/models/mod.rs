@@ -212,10 +212,13 @@ mod tests {
         let progress_calls = std::sync::Arc::new(std::sync::atomic::AtomicU64::new(0));
         let pc = progress_calls.clone();
         let final_path = m
-            .download_with_info(&info, Some(Box::new(move |done, total| {
-                assert!(done <= total);
-                pc.store(done, std::sync::atomic::Ordering::SeqCst);
-            })))
+            .download_with_info(
+                &info,
+                Some(Box::new(move |done, total| {
+                    assert!(done <= total);
+                    pc.store(done, std::sync::atomic::Ordering::SeqCst);
+                })),
+            )
             .await
             .unwrap();
         assert!(final_path.exists());

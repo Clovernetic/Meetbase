@@ -88,7 +88,9 @@ mod tests {
     async fn corrupt_settings_fall_back_to_defaults() {
         let dir = tempfile::tempdir().unwrap();
         let pool = db::open(&dir.path().join("t.db")).await.unwrap();
-        db::set_setting(&pool, SETTINGS_KEY, "{not json").await.unwrap();
+        db::set_setting(&pool, SETTINGS_KEY, "{not json")
+            .await
+            .unwrap();
         let s = load(&pool).await.unwrap();
         assert_eq!(s.whisper_model, "small");
     }

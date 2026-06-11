@@ -36,10 +36,16 @@ pub struct ChatMessage {
 
 impl ChatMessage {
     pub fn system(content: impl Into<String>) -> Self {
-        Self { role: Role::System, content: content.into() }
+        Self {
+            role: Role::System,
+            content: content.into(),
+        }
     }
     pub fn user(content: impl Into<String>) -> Self {
-        Self { role: Role::User, content: content.into() }
+        Self {
+            role: Role::User,
+            content: content.into(),
+        }
     }
 }
 
@@ -55,7 +61,11 @@ pub trait ChatProvider: Send + Sync {
 
 /// Provider configuration as stored in settings.
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(tag = "kind", rename_all = "snake_case")]
+#[serde(
+    tag = "kind",
+    rename_all = "snake_case",
+    rename_all_fields = "camelCase"
+)]
 pub enum ProviderConfig {
     Ollama {
         /// e.g. `http://localhost:11434`
@@ -77,9 +87,15 @@ impl ProviderConfig {
             ProviderConfig::Ollama { base_url, model } => {
                 Box::new(OllamaProvider::new(base_url.clone(), model.clone()))
             }
-            ProviderConfig::OpenAiCompat { base_url, api_key, model } => Box::new(
-                OpenAiCompatProvider::new(base_url.clone(), api_key.clone(), model.clone()),
-            ),
+            ProviderConfig::OpenAiCompat {
+                base_url,
+                api_key,
+                model,
+            } => Box::new(OpenAiCompatProvider::new(
+                base_url.clone(),
+                api_key.clone(),
+                model.clone(),
+            )),
         }
     }
 }

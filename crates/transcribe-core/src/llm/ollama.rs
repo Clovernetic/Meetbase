@@ -99,7 +99,9 @@ mod tests {
         let server = MockServer::start().await;
         Mock::given(method("POST"))
             .and(path("/api/chat"))
-            .and(body_partial_json(json!({"model": "llama3.2", "stream": false})))
+            .and(body_partial_json(
+                json!({"model": "llama3.2", "stream": false}),
+            ))
             .respond_with(ResponseTemplate::new(200).set_body_json(json!({
                 "message": {"role": "assistant", "content": "Summary here."}
             })))
@@ -130,7 +132,10 @@ mod tests {
             .unwrap_err();
         let msg = err.to_string();
         assert!(msg.contains("404"), "error should carry status: {msg}");
-        assert!(msg.contains("model not found"), "error should carry body: {msg}");
+        assert!(
+            msg.contains("model not found"),
+            "error should carry body: {msg}"
+        );
     }
 
     #[tokio::test]

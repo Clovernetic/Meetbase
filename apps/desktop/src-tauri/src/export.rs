@@ -46,7 +46,11 @@ pub fn meeting_to_markdown(
         out.push_str("*No speech was detected in this meeting.*\n");
     } else {
         for seg in segments {
-            out.push_str(&format!("**[{}]** {}\n\n", format_ts(seg.start_ms), seg.text));
+            out.push_str(&format!(
+                "**[{}]** {}\n\n",
+                format_ts(seg.start_ms),
+                seg.text
+            ));
         }
     }
     out

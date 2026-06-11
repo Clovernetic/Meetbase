@@ -63,7 +63,9 @@ impl ChatProvider for OpenAiCompatProvider {
         if !response.status().is_success() {
             let status = response.status();
             let text = response.text().await.unwrap_or_default();
-            return Err(CoreError::Llm(format!("provider returned {status}: {text}")));
+            return Err(CoreError::Llm(format!(
+                "provider returned {status}: {text}"
+            )));
         }
         let parsed: ChatResponse = response
             .json()
@@ -119,12 +121,12 @@ mod tests {
             })))
             .mount(&server)
             .await;
-        let provider = OpenAiCompatProvider::new(
-            format!("{}/v1/", server.uri()),
-            "k".into(),
-            "m".into(),
+        let provider =
+            OpenAiCompatProvider::new(format!("{}/v1/", server.uri()), "k".into(), "m".into());
+        assert_eq!(
+            provider.complete(&[ChatMessage::user("hi")]).await.unwrap(),
+            "OK"
         );
-        assert_eq!(provider.complete(&[ChatMessage::user("hi")]).await.unwrap(), "OK");
     }
 
     #[tokio::test]

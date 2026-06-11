@@ -1,0 +1,11 @@
+{
+  "name": "meetbase-monorepo",
+  "private": true,
+  "license": "MIT",
+  "scripts": {
+    "dev": "pnpm --filter @meetbase/desktop dev",
+    "build": "pnpm --filter @meetbase/desktop build",
+    "typecheck": "pnpm --filter @meetbase/desktop typecheck"
+  },
+  "packageManager": "pnpm@10.29.3"
+}

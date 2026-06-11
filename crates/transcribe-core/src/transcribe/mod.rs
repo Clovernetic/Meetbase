@@ -9,7 +9,9 @@ use std::time::Duration;
 
 use serde::{Deserialize, Serialize};
 use tracing::info;
-use whisper_rs::{FullParams, SamplingStrategy, WhisperContext, WhisperContextParameters, WhisperState};
+use whisper_rs::{
+    FullParams, SamplingStrategy, WhisperContext, WhisperContextParameters, WhisperState,
+};
 
 use crate::audio::PIPELINE_SAMPLE_RATE;
 use crate::error::{CoreError, Result};
@@ -24,7 +26,7 @@ pub struct TranscriptSegment {
 }
 
 /// Transcription options for one chunk or file.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct TranscribeOptions {
     /// ISO-639-1 code (`"en"`, `"pl"`, …) or `None` for auto-detection.
     pub language: Option<String>,
@@ -32,16 +34,6 @@ pub struct TranscribeOptions {
     pub translate: bool,
     /// Worker threads for whisper.cpp; `0` lets the engine decide.
     pub threads: usize,
-}
-
-impl Default for TranscribeOptions {
-    fn default() -> Self {
-        Self {
-            language: None,
-            translate: false,
-            threads: 0,
-        }
-    }
 }
 
 /// whisper.cpp degrades on extremely short inputs; pad anything shorter than
@@ -123,7 +115,11 @@ impl Transcriber {
         let lang = options.language.as_deref();
         params.set_language(lang.or(Some("auto")));
         let threads = if options.threads == 0 {
-            (std::thread::available_parallelism().map(|n| n.get()).unwrap_or(4) as i32 - 2).max(1)
+            (std::thread::available_parallelism()
+                .map(|n| n.get())
+                .unwrap_or(4) as i32
+                - 2)
+            .max(1)
         } else {
             options.threads as i32
         };
