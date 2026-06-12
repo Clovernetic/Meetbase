@@ -7,7 +7,7 @@
 
 mod registry;
 
-pub use registry::{ModelInfo, MODEL_REGISTRY};
+pub use registry::{ModelInfo, DIARIZATION_REGISTRY, MODEL_REGISTRY};
 
 use std::path::{Path, PathBuf};
 
@@ -19,7 +19,7 @@ use tracing::info;
 use crate::error::{CoreError, Result};
 
 /// Download progress callback: (bytes_downloaded, total_bytes).
-pub type ProgressFn = Box<dyn Fn(u64, u64) + Send + Sync>;
+pub type ProgressFn = std::sync::Arc<dyn Fn(u64, u64) + Send + Sync>;
 
 pub struct ModelManager {
     models_dir: PathBuf,
@@ -137,6 +137,43 @@ impl ModelManager {
         Ok(final_path)
     }
 
+    /// Paths of the diarization models (segmentation, embedding), erroring
+    /// if either is missing.
+    pub fn resolve_diarization(&self) -> Result<(PathBuf, PathBuf)> {
+        let mut paths = DIARIZATION_REGISTRY.iter().map(|info| {
+            let path = self.models_dir.join(info.file_name);
+            if path.exists() {
+                Ok(path)
+            } else {
+                Err(CoreError::ModelNotDownloaded(info.id.to_string()))
+            }
+        });
+        Ok((paths.next().unwrap()?, paths.next().unwrap()?))
+    }
+
+    pub fn diarization_downloaded(&self) -> bool {
+        self.resolve_diarization().is_ok()
+    }
+
+    /// Downloads any missing diarization models. Progress reports combined
+    /// bytes across both files.
+    pub async fn ensure_diarization(&self, progress: Option<ProgressFn>) -> Result<()> {
+        let total: u64 = DIARIZATION_REGISTRY.iter().map(|m| m.size_bytes).sum();
+        let mut done_base: u64 = 0;
+        for info in DIARIZATION_REGISTRY {
+            let per_file: Option<ProgressFn> = progress.as_ref().map(|outer| {
+                let outer = outer.clone();
+                let base = done_base;
+                std::sync::Arc::new(move |downloaded: u64, _file_total: u64| {
+                    outer(base + downloaded, total);
+                }) as ProgressFn
+            });
+            self.download_with_info(info, per_file).await?;
+            done_base += info.size_bytes;
+        }
+        Ok(())
+    }
+
     pub async fn delete(&self, id: &str) -> Result<()> {
         let path = self.path_for(id)?;
         if path.exists() {
@@ -214,7 +251,7 @@ mod tests {
         let final_path = m
             .download_with_info(
                 &info,
-                Some(Box::new(move |done, total| {
+                Some(std::sync::Arc::new(move |done, total| {
                     assert!(done <= total);
                     pc.store(done, std::sync::atomic::Ordering::SeqCst);
                 })),

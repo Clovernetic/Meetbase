@@ -19,6 +19,7 @@
 Meetbase records, transcribes and summarizes your meetings **entirely on your computer** — no bot joining your calls, no audio uploaded anywhere, no account required.
 
 - 🎙 **One-click recording** with live transcription (Whisper, runs locally)
+- 🗣 **Speaker recognition** — local diarization labels who said what (pyannote, ONNX)
 - 📄 **Import** audio/video files (wav, mp3, m4a, mp4, mov, …) and get a transcript
 - 🧠 **AI summaries** — notes, decisions, action items — via local **Ollama** or your own API key (OpenAI, Groq, OpenRouter, Anthropic-compatible). Only transcript *text* is ever sent, never audio
 - 🌍 **Multilingual**: transcription in 90+ languages, summaries in the language you choose (including Polish)
@@ -90,7 +91,6 @@ On macOS the first recording asks for the system-audio permission; if you declin
 
 ## Roadmap
 
-- **Speaker diarization** (who said what) — Pro
 - Auto-detect meetings & auto-start recording — Pro
 - PDF / DOCX / Notion / Slack export — Pro
 - Custom summary templates — Pro

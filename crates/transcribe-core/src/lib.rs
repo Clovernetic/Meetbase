@@ -13,6 +13,7 @@
 //! provider (BYOK) — and it only ever sends text, never audio.
 
 pub mod audio;
+pub mod diarize;
 pub mod error;
 pub mod llm;
 pub mod models;

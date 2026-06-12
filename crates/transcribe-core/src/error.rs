@@ -28,6 +28,9 @@ pub enum CoreError {
     #[error("transcription error: {0}")]
     Transcription(String),
 
+    #[error("diarization error: {0}")]
+    Diarization(String),
+
     #[error("LLM provider error: {0}")]
     Llm(String),
 

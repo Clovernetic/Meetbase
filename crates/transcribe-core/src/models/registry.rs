@@ -37,6 +37,30 @@ macro_rules! model {
     };
 }
 
+/// ONNX models for speaker diarization (downloaded together on demand).
+/// URLs point at the pyannote-rs release mirror; checksums computed from
+/// those artifacts.
+pub static DIARIZATION_REGISTRY: &[ModelInfo] = &[
+    ModelInfo {
+        id: "segmentation-3.0",
+        display_name: "Pyannote Segmentation 3.0",
+        file_name: "segmentation-3.0.onnx",
+        url: "https://github.com/thewh1teagle/pyannote-rs/releases/download/v0.1.0/segmentation-3.0.onnx",
+        size_bytes: 5_983_836,
+        sha256: "b78fc48113bb46fd247ae6a9aea737079550c647638db961df7e0e1e9f4ba62e",
+        quality_hint: "Detects speaker turns (who-spoke-when boundaries).",
+    },
+    ModelInfo {
+        id: "wespeaker-embedding",
+        display_name: "WeSpeaker CAM++ voice embeddings",
+        file_name: "wespeaker_en_voxceleb_CAM++.onnx",
+        url: "https://github.com/thewh1teagle/pyannote-rs/releases/download/v0.1.0/wespeaker_en_voxceleb_CAM%2B%2B.onnx",
+        size_bytes: 29_292_684,
+        sha256: "c46fad10b5f81e1aa4a60c162714208577093655076c5450f8c469e522ec54ef",
+        quality_hint: "Tells speakers apart by voice fingerprint.",
+    },
+];
+
 pub static MODEL_REGISTRY: &[ModelInfo] = &[
     model!(
         "tiny",

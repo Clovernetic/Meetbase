@@ -27,6 +27,9 @@ pub struct AppSettings {
     /// Mix system audio (other meeting participants) into the recording
     /// where the platform supports loopback capture.
     pub capture_system_audio: bool,
+    /// Label transcript segments with speakers (requires the diarization
+    /// models to be downloaded; see `enable_diarization`).
+    pub diarization: bool,
 }
 
 impl Default for AppSettings {
@@ -39,6 +42,7 @@ impl Default for AppSettings {
             llm: None,
             mic_device: None,
             capture_system_audio: true,
+            diarization: false,
         }
     }
 }

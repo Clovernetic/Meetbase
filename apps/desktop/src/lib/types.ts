@@ -21,6 +21,8 @@ export interface Segment {
   startMs: number;
   endMs: number;
   text: string;
+  /** 1-based speaker id from diarization; null when unknown/disabled. */
+  speaker: number | null;
 }
 
 export interface Summary {
@@ -60,6 +62,7 @@ export interface AppSettings {
   llm: ProviderConfig | null;
   micDevice: string | null;
   captureSystemAudio: boolean;
+  diarization: boolean;
 }
 
 export interface SummaryTemplate {

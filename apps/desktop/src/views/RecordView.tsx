@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { open } from "@tauri-apps/plugin-dialog";
 import { api } from "../lib/api";
 import { useStore } from "../lib/store";
+import { SpeakerChip } from "../components/SpeakerChip";
 import { formatClock, formatTimestamp } from "../lib/format";
 import type { Segment } from "../lib/types";
 
@@ -262,12 +263,19 @@ function LiveTranscript({ segments }: { segments: Segment[] }) {
         </p>
       ) : (
         <div className="mx-auto max-w-2xl space-y-4 pb-24">
-          {segments.map((seg) => (
+          {segments.map((seg, i) => (
             <div key={seg.id} className="segment-in flex gap-4">
               <span className="mt-[3px] shrink-0 font-mono text-[11px] tabular-nums text-mist-500">
                 {formatTimestamp(seg.startMs)}
               </span>
-              <p className="text-[14.5px] leading-relaxed text-mist-100">{seg.text}</p>
+              <div className="min-w-0">
+                {seg.speaker !== null && seg.speaker !== segments[i - 1]?.speaker && (
+                  <div className="mb-0.5">
+                    <SpeakerChip speaker={seg.speaker} />
+                  </div>
+                )}
+                <p className="text-[14.5px] leading-relaxed text-mist-100">{seg.text}</p>
+              </div>
             </div>
           ))}
         </div>

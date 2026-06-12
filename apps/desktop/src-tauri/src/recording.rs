@@ -57,6 +57,24 @@ pub async fn start(
     let models = transcribe_core::models::ModelManager::with_default_dir()?;
     let model_path = models.resolve(&settings.whisper_model)?;
 
+    // Diarization degrades gracefully: missing models just mean an
+    // unlabeled transcript.
+    let diarization = if settings.diarization {
+        match models.resolve_diarization() {
+            Ok((segmentation_model, embedding_model)) => Some(crate::worker::DiarizationRequest {
+                segmentation_model,
+                embedding_model,
+                session_key: meeting_id.clone(),
+            }),
+            Err(e) => {
+                warn!("diarization enabled but models missing: {e}");
+                None
+            }
+        }
+    } else {
+        None
+    };
+
     let stop = Arc::new(AtomicBool::new(false));
     let (chunk_tx, mut chunk_rx) = tokio::sync::mpsc::unbounded_channel::<SpeechChunk>();
 
@@ -145,6 +163,7 @@ pub async fn start(
                     model_id.clone(),
                     model_path.clone(),
                     options.clone(),
+                    diarization.clone(),
                 )
                 .await;
             let segments = match result {
@@ -161,6 +180,7 @@ pub async fn start(
                     seg.start_ms as i64,
                     seg.end_ms as i64,
                     &seg.text,
+                    seg.speaker.map(|s| s as i64),
                 )
                 .await
                 {

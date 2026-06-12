@@ -46,11 +46,18 @@ pub fn meeting_to_markdown(
         out.push_str("*No speech was detected in this meeting.*\n");
     } else {
         for seg in segments {
-            out.push_str(&format!(
-                "**[{}]** {}\n\n",
-                format_ts(seg.start_ms),
-                seg.text
-            ));
+            match seg.speaker {
+                Some(speaker) => out.push_str(&format!(
+                    "**[{}] Speaker {speaker}:** {}\n\n",
+                    format_ts(seg.start_ms),
+                    seg.text
+                )),
+                None => out.push_str(&format!(
+                    "**[{}]** {}\n\n",
+                    format_ts(seg.start_ms),
+                    seg.text
+                )),
+            }
         }
     }
     out
@@ -78,6 +85,7 @@ mod tests {
             start_ms,
             end_ms: start_ms + 1000,
             text: text.into(),
+            speaker: None,
         }
     }
 
@@ -105,6 +113,15 @@ mod tests {
         assert!(md.contains("**[00:00]** Welcome."));
         // Timestamps past the hour use h:mm:ss.
         assert!(md.contains("**[01:02:05]** Wrapping up."));
+    }
+
+    #[test]
+    fn renders_speaker_labels_when_present() {
+        let mut labeled = seg(0, "Hi there.");
+        labeled.speaker = Some(1);
+        let md = meeting_to_markdown(&meeting(), &[labeled, seg(2000, "Anonymous line.")], None);
+        assert!(md.contains("**[00:00] Speaker 1:** Hi there."));
+        assert!(md.contains("**[00:02]** Anonymous line."));
     }
 
     #[test]

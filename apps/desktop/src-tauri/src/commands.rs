@@ -199,6 +199,21 @@ pub async fn import_media(
     .await?;
     db::set_meeting_duration(&state.pool, &meeting_id, duration_ms as i64).await?;
 
+    let diarization = if settings.diarization {
+        models
+            .resolve_diarization()
+            .map(
+                |(segmentation_model, embedding_model)| crate::worker::DiarizationRequest {
+                    segmentation_model,
+                    embedding_model,
+                    session_key: meeting_id.clone(),
+                },
+            )
+            .ok()
+    } else {
+        None
+    };
+
     // One whisper pass over the whole file: best quality and native
     // timestamps (whisper windows long audio internally).
     let segments = state
@@ -213,6 +228,7 @@ pub async fn import_media(
                 translate: false,
                 threads: 0,
             },
+            diarization,
         )
         .await;
     let segments = match segments {
@@ -229,6 +245,7 @@ pub async fn import_media(
             seg.start_ms as i64,
             seg.end_ms as i64,
             &seg.text,
+            seg.speaker.map(|s| s as i64),
         )
         .await?;
     }
@@ -280,7 +297,7 @@ pub async fn download_model(app: AppHandle, id: String) -> Result<()> {
     manager
         .download(
             &id,
-            Some(Box::new(move |downloaded, total| {
+            Some(std::sync::Arc::new(move |downloaded, total| {
                 let _ = app.emit(
                     "model-download-progress",
                     DownloadProgress {
@@ -291,6 +308,32 @@ pub async fn download_model(app: AppHandle, id: String) -> Result<()> {
                 );
             })),
         )
+        .await?;
+    Ok(())
+}
+
+/// Whether the diarization models are present locally.
+#[tauri::command]
+pub async fn diarization_status() -> Result<bool> {
+    Ok(ModelManager::with_default_dir()?.diarization_downloaded())
+}
+
+/// Downloads the diarization models (segmentation + voice embeddings),
+/// emitting combined progress under the pseudo-model id `diarization`.
+#[tauri::command]
+pub async fn enable_diarization(app: AppHandle) -> Result<()> {
+    let manager = ModelManager::with_default_dir()?;
+    manager
+        .ensure_diarization(Some(std::sync::Arc::new(move |downloaded, total| {
+            let _ = app.emit(
+                "model-download-progress",
+                DownloadProgress {
+                    model_id: "diarization".into(),
+                    downloaded,
+                    total,
+                },
+            );
+        })))
         .await?;
     Ok(())
 }
@@ -368,6 +411,7 @@ pub async fn generate_summary(
             text: s.text.clone(),
             start_ms: s.start_ms as u64,
             end_ms: s.end_ms as u64,
+            speaker: s.speaker.map(|sp| sp as u32),
         })
         .collect();
 

@@ -29,6 +29,9 @@ reqwest.workspace = true
 chrono.workspace = true
 
 cpal = "0.16"
+pyannote-rs = "0.3"
+# pyannote-rs targets this exact ort pre-release; newer rcs break its API.
+ort = "=2.0.0-rc.10"
 ringbuf = "0.4"
 rubato = "0.16"
 symphonia = { version = "0.5", features = ["all"] }

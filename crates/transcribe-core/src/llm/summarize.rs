@@ -64,13 +64,22 @@ Bullet list of open questions and agreed next steps."
     ]
 }
 
-/// Formats a transcript for the prompt as `[mm:ss] text` lines.
+/// Formats a transcript for the prompt as `[mm:ss] text` lines, with
+/// `Speaker N:` prefixes when diarization labeled the segments.
 pub fn format_transcript(segments: &[TranscriptSegment]) -> String {
     segments
         .iter()
         .map(|s| {
             let secs = s.start_ms / 1000;
-            format!("[{:02}:{:02}] {}", secs / 60, secs % 60, s.text)
+            match s.speaker {
+                Some(speaker) => format!(
+                    "[{:02}:{:02}] Speaker {speaker}: {}",
+                    secs / 60,
+                    secs % 60,
+                    s.text
+                ),
+                None => format!("[{:02}:{:02}] {}", secs / 60, secs % 60, s.text),
+            }
         })
         .collect::<Vec<_>>()
         .join("\n")
@@ -119,6 +128,7 @@ mod tests {
             text: text.into(),
             start_ms,
             end_ms: start_ms + 1000,
+            speaker: None,
         }
     }
 
@@ -143,6 +153,13 @@ mod tests {
         assert!(messages[0].content.contains("## Action items"));
         assert!(messages[0].content.contains("in Polish"));
         assert!(messages[1].content.contains("[00:00] Hi"));
+    }
+
+    #[test]
+    fn speaker_labels_appear_in_formatted_transcript() {
+        let mut s = seg(0, "Hello");
+        s.speaker = Some(2);
+        assert_eq!(format_transcript(&[s]), "[00:00] Speaker 2: Hello");
     }
 
     #[test]

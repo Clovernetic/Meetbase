@@ -31,6 +31,7 @@ pub struct Segment {
     pub start_ms: i64,
     pub end_ms: i64,
     pub text: String,
+    pub speaker: Option<i64>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -203,50 +204,48 @@ pub async fn list_meetings(pool: &SqlitePool, query: Option<&str>) -> Result<Vec
 
 // ---- segments ----
 
+fn segment_from_row(row: &sqlx::sqlite::SqliteRow) -> Segment {
+    Segment {
+        id: row.get("id"),
+        meeting_id: row.get("meeting_id"),
+        start_ms: row.get("start_ms"),
+        end_ms: row.get("end_ms"),
+        text: row.get("text"),
+        speaker: row.get("speaker"),
+    }
+}
+
 pub async fn insert_segment(
     pool: &SqlitePool,
     meeting_id: &str,
     start_ms: i64,
     end_ms: i64,
     text: &str,
+    speaker: Option<i64>,
 ) -> Result<Segment> {
     let row = sqlx::query(
-        "INSERT INTO segments (meeting_id, start_ms, end_ms, text) VALUES (?, ?, ?, ?)
-         RETURNING id, meeting_id, start_ms, end_ms, text",
+        "INSERT INTO segments (meeting_id, start_ms, end_ms, text, speaker) VALUES (?, ?, ?, ?, ?)
+         RETURNING id, meeting_id, start_ms, end_ms, text, speaker",
     )
     .bind(meeting_id)
     .bind(start_ms)
     .bind(end_ms)
     .bind(text)
+    .bind(speaker)
     .fetch_one(pool)
     .await?;
-    Ok(Segment {
-        id: row.get("id"),
-        meeting_id: row.get("meeting_id"),
-        start_ms: row.get("start_ms"),
-        end_ms: row.get("end_ms"),
-        text: row.get("text"),
-    })
+    Ok(segment_from_row(&row))
 }
 
 pub async fn list_segments(pool: &SqlitePool, meeting_id: &str) -> Result<Vec<Segment>> {
     let rows = sqlx::query(
-        "SELECT id, meeting_id, start_ms, end_ms, text FROM segments
+        "SELECT id, meeting_id, start_ms, end_ms, text, speaker FROM segments
          WHERE meeting_id = ? ORDER BY start_ms",
     )
     .bind(meeting_id)
     .fetch_all(pool)
     .await?;
-    Ok(rows
-        .iter()
-        .map(|row| Segment {
-            id: row.get("id"),
-            meeting_id: row.get("meeting_id"),
-            start_ms: row.get("start_ms"),
-            end_ms: row.get("end_ms"),
-            text: row.get("text"),
-        })
-        .collect())
+    Ok(rows.iter().map(segment_from_row).collect())
 }
 
 // ---- summaries ----
@@ -359,14 +358,18 @@ mod tests {
         create_meeting(&pool, "m1", "T", "live", None)
             .await
             .unwrap();
-        insert_segment(&pool, "m1", 5000, 6000, "second")
+        insert_segment(&pool, "m1", 5000, 6000, "second", None)
             .await
             .unwrap();
-        insert_segment(&pool, "m1", 0, 1000, "first").await.unwrap();
+        insert_segment(&pool, "m1", 0, 1000, "first", Some(1))
+            .await
+            .unwrap();
 
         let segs = list_segments(&pool, "m1").await.unwrap();
         assert_eq!(segs.len(), 2);
         assert_eq!(segs[0].text, "first");
+        assert_eq!(segs[0].speaker, Some(1));
+        assert_eq!(segs[1].speaker, None);
 
         delete_meeting(&pool, "m1").await.unwrap();
         assert!(list_segments(&pool, "m1").await.unwrap().is_empty());
@@ -381,9 +384,16 @@ mod tests {
         create_meeting(&pool, "m2", "Standup", "live", None)
             .await
             .unwrap();
-        insert_segment(&pool, "m2", 0, 1000, "we discussed the budget overrun")
-            .await
-            .unwrap();
+        insert_segment(
+            &pool,
+            "m2",
+            0,
+            1000,
+            "we discussed the budget overrun",
+            None,
+        )
+        .await
+        .unwrap();
         create_meeting(&pool, "m3", "1:1", "live", None)
             .await
             .unwrap();

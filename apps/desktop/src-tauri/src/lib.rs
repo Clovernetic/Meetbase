@@ -44,6 +44,8 @@ pub fn run() {
             commands::list_models,
             commands::download_model,
             commands::delete_model,
+            commands::diarization_status,
+            commands::enable_diarization,
             commands::list_audio_devices,
             commands::get_settings,
             commands::set_settings,

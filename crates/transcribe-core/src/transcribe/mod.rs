@@ -23,6 +23,10 @@ pub struct TranscriptSegment {
     /// Start offset from the beginning of the recording.
     pub start_ms: u64,
     pub end_ms: u64,
+    /// 1-based speaker id assigned by diarization; `None` when diarization
+    /// is disabled or no speaker turn overlapped this segment.
+    #[serde(default)]
+    pub speaker: Option<u32>,
 }
 
 /// Transcription options for one chunk or file.
@@ -149,6 +153,7 @@ impl Transcriber {
                 text,
                 start_ms: offset_ms + (seg.start_timestamp().max(0) as u64) * 10,
                 end_ms: offset_ms + (seg.end_timestamp().max(0) as u64) * 10,
+                speaker: None,
             });
         }
         Ok(segments)

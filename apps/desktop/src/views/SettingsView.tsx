@@ -91,6 +91,10 @@ export function SettingsView() {
               ))}
             </select>
           </Field>
+          <DiarizationToggle
+            enabled={settings.diarization}
+            onChange={(diarization) => update({ diarization })}
+          />
         </Section>
 
         <Section
@@ -284,6 +288,93 @@ function ModelsManager({
 
 const smallBtnCls =
   "shrink-0 rounded border border-ink-600 px-2.5 py-1 text-[11.5px] text-mist-100 transition hover:border-tide-500 hover:text-tide-300";
+
+/* ---------- speaker recognition ---------- */
+
+function DiarizationToggle({
+  enabled,
+  onChange,
+}: {
+  enabled: boolean;
+  onChange: (enabled: boolean) => void;
+}) {
+  const [downloaded, setDownloaded] = useState<boolean | null>(null);
+  const [progress, setProgress] = useState<number | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    void api.diarizationStatus().then(setDownloaded).catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    const unlisten = events.onModelDownloadProgress((e) => {
+      if (e.modelId === "diarization") {
+        setProgress(e.total ? e.downloaded / e.total : 0);
+      }
+    });
+    return () => {
+      void unlisten.then((fn) => fn());
+    };
+  }, []);
+
+  const toggle = async (next: boolean) => {
+    setError(null);
+    if (!next) {
+      onChange(false);
+      return;
+    }
+    if (downloaded) {
+      onChange(true);
+      return;
+    }
+    setProgress(0);
+    try {
+      await api.enableDiarization();
+      setDownloaded(true);
+      onChange(true);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setProgress(null);
+    }
+  };
+
+  const downloading = progress !== null;
+  return (
+    <div className="mt-4">
+      <label className="flex cursor-pointer items-center gap-3">
+        <input
+          type="checkbox"
+          checked={enabled}
+          disabled={downloading}
+          onChange={(e) => void toggle(e.target.checked)}
+          className="h-4 w-4 accent-tide-500"
+        />
+        <div>
+          <p className="text-[13px] text-mist-100">Speaker recognition</p>
+          <p className="text-[11.5px] text-mist-500">
+            Labels who said what. Runs locally; first enable downloads two
+            small models (~34&nbsp;MB).
+          </p>
+        </div>
+      </label>
+      {downloading && (
+        <div className="mt-2.5 flex items-center gap-3 pl-7">
+          <div className="h-1 flex-1 overflow-hidden rounded-full bg-ink-700">
+            <div
+              className="h-full rounded-full bg-tide-400 transition-[width] duration-200"
+              style={{ width: `${(progress ?? 0) * 100}%` }}
+            />
+          </div>
+          <span className="font-mono text-[11px] tabular-nums text-tide-300">
+            {Math.round((progress ?? 0) * 100)}%
+          </span>
+        </div>
+      )}
+      {error && <p className="mt-1.5 pl-7 text-[11.5px] text-signal-400">{error}</p>}
+    </div>
+  );
+}
 
 /* ---------- LLM provider ---------- */
 

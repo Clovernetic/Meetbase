@@ -53,6 +53,10 @@ export const api = {
   downloadModel: (id: string) => call<void>("download_model", { id }),
   deleteModel: (id: string) => call<void>("delete_model", { id }),
 
+  // diarization
+  diarizationStatus: () => call<boolean>("diarization_status"),
+  enableDiarization: () => call<void>("enable_diarization"),
+
   // audio
   listAudioDevices: () => call<string[]>("list_audio_devices"),
 

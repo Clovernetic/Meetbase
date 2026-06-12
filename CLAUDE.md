@@ -36,6 +36,10 @@ pnpm --filter @meetbase/desktop tauri dev               # run the app
   (`https://huggingface.co/ggerganov/whisper.cpp/raw/main/<file>`).
 - GPU features are opt-in cargo features (`metal`, `cuda`, `vulkan`)
   threaded through `meetbase → transcribe-core → whisper-rs`.
+- Diarization (`diarize/`): pyannote-rs + two ONNX models from
+  DIARIZATION_REGISTRY; `ort` is pinned `=2.0.0-rc.10` because pyannote-rs
+  0.3 breaks on newer rcs. The diarizer lives on the transcriber worker
+  thread; speaker clustering persists per `session_key` (meeting id).
 - System-audio capture: macOS uses a CoreAudio process tap via `cidre`
   (`audio/system_macos.rs`, needs macOS 14.4+; permission denial = silent
   zeros, not an error); Windows uses WASAPI loopback via cpal.
