@@ -83,15 +83,14 @@ The engine lives in [`crates/transcribe-core`](crates/transcribe-core) — a reu
 | Capability | macOS | Windows |
 |---|---|---|
 | Microphone capture | ✅ | ✅ |
-| System-audio capture (other participants) | 🚧 roadmap (CoreAudio tap) | ✅ WASAPI loopback |
+| System-audio capture (other participants) | ✅ CoreAudio process tap (macOS 14.4+) | ✅ WASAPI loopback |
 | GPU acceleration | ✅ Metal | ✅ CUDA / Vulkan |
 
-On macOS, recording with speakers (not headphones) captures everyone fine via the microphone; native system-audio capture is the top roadmap item. Linux builds from source today; native packages are planned.
+On macOS the first recording asks for the system-audio permission; if you decline, macOS silently delivers empty audio for the system side (the microphone still works) — re-enable it under *System Settings → Privacy & Security → Screen & System Audio Recording*. On macOS < 14.4 Meetbase records the microphone only. Linux builds from source today; native packages are planned.
 
 ## Roadmap
 
 - **Speaker diarization** (who said what) — Pro
-- macOS system-audio capture (CoreAudio process tap)
 - Auto-detect meetings & auto-start recording — Pro
 - PDF / DOCX / Notion / Slack export — Pro
 - Custom summary templates — Pro

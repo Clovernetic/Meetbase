@@ -7,11 +7,9 @@
 //! System audio:
 //! - **Windows**: WASAPI loopback — capture an *output* device as input,
 //!   supported natively by cpal.
-//! - **macOS**: requires a CoreAudio process tap (macOS 14.4+) or a
-//!   ScreenCaptureKit stream; tracked in `system_macos.rs` behind the same
-//!   trait. Until that lands, recording uses the microphone (which still
-//!   hears meeting audio when using speakers, and headset users are guided
-//!   to the macOS aggregate-device setup in the docs).
+//! - **macOS**: CoreAudio process tap (macOS 14.4+), see
+//!   [`super::system_macos`]. On older macOS the call fails gracefully and
+//!   recording continues with the microphone only.
 
 use cpal::traits::{DeviceTrait, HostTrait, StreamTrait};
 use tracing::{info, warn};
@@ -21,10 +19,24 @@ use crate::error::{CoreError, Result};
 use super::resample::{downmix_to_mono, StreamResampler};
 
 /// A running capture stream. Dropping it stops capture.
+///
+/// The guard owns whatever keeps the OS callback alive (a `cpal::Stream`,
+/// a CoreAudio tap + aggregate device, …). Handles are deliberately not
+/// `Send`: they live and die on the capture thread that created them.
 pub struct CaptureHandle {
-    _stream: cpal::Stream,
+    _guard: Box<dyn std::any::Any>,
     pub device_name: String,
     pub sample_rate: u32,
+}
+
+impl CaptureHandle {
+    pub(crate) fn new(guard: impl std::any::Any, device_name: String, sample_rate: u32) -> Self {
+        Self {
+            _guard: Box::new(guard),
+            device_name,
+            sample_rate,
+        }
+    }
 }
 
 /// Lists input device names, default first.
@@ -113,11 +125,7 @@ pub fn start_microphone(
         .play()
         .map_err(|e| CoreError::AudioDevice(format!("start stream: {e}")))?;
 
-    Ok(CaptureHandle {
-        _stream: stream,
-        device_name: resolved_name,
-        sample_rate,
-    })
+    Ok(CaptureHandle::new(stream, resolved_name, sample_rate))
 }
 
 /// Starts system-audio (loopback) capture where the platform supports it.
@@ -155,15 +163,17 @@ pub fn start_system_audio(mut sink: impl FnMut(&[f32]) + Send + 'static) -> Resu
     stream
         .play()
         .map_err(|e| CoreError::AudioDevice(format!("start loopback stream: {e}")))?;
-    Ok(CaptureHandle {
-        _stream: stream,
-        device_name: resolved_name,
-        sample_rate,
-    })
+    Ok(CaptureHandle::new(stream, resolved_name, sample_rate))
+}
+
+/// Starts system-audio capture via a CoreAudio process tap (macOS 14.4+).
+#[cfg(target_os = "macos")]
+pub fn start_system_audio(sink: impl FnMut(&[f32]) + Send + 'static) -> Result<CaptureHandle> {
+    super::system_macos::start_system_audio(sink)
 }
 
 /// System-audio capture is not yet wired on this platform; see module docs.
-#[cfg(not(target_os = "windows"))]
+#[cfg(not(any(target_os = "windows", target_os = "macos")))]
 pub fn start_system_audio(_sink: impl FnMut(&[f32]) + Send + 'static) -> Result<CaptureHandle> {
     Err(CoreError::AudioDevice(
         "system-audio capture is not yet supported on this platform".into(),

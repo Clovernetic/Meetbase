@@ -4,5 +4,7 @@
 <dict>
   <key>NSMicrophoneUsageDescription</key>
   <string>Meetbase records your meetings locally to transcribe them. Audio never leaves this Mac.</string>
+  <key>NSAudioCaptureUsageDescription</key>
+  <string>Meetbase captures system audio so other meeting participants are transcribed too. Audio never leaves this Mac.</string>
 </dict>
 </plist>

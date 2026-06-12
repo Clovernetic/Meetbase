@@ -129,9 +129,11 @@ export function SettingsView() {
             <div>
               <p className="text-[13px] text-mist-100">Capture system audio</p>
               <p className="text-[11.5px] text-mist-500">
-                Mixes other participants' voices into the recording where the
-                platform supports it (Windows loopback; macOS support is on the
-                roadmap).
+                Mixes other participants' voices into the recording. Needs
+                macOS 14.4+ (grant the system-audio permission when asked) or
+                Windows. If transcripts miss the other side, check System
+                Settings → Privacy &amp; Security → Screen &amp; System Audio
+                Recording.
               </p>
             </div>
           </label>

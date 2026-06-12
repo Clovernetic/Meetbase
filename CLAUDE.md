@@ -36,5 +36,6 @@ pnpm --filter @meetbase/desktop tauri dev               # run the app
   (`https://huggingface.co/ggerganov/whisper.cpp/raw/main/<file>`).
 - GPU features are opt-in cargo features (`metal`, `cuda`, `vulkan`)
   threaded through `meetbase → transcribe-core → whisper-rs`.
-- macOS system-audio capture is NOT implemented yet (top roadmap item);
-  Windows uses WASAPI loopback via cpal.
+- System-audio capture: macOS uses a CoreAudio process tap via `cidre`
+  (`audio/system_macos.rs`, needs macOS 14.4+; permission denial = silent
+  zeros, not an error); Windows uses WASAPI loopback via cpal.

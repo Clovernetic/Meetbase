@@ -10,6 +10,8 @@ pub mod chunker;
 pub mod import;
 pub mod mixer;
 pub mod resample;
+#[cfg(target_os = "macos")]
+pub mod system_macos;
 pub mod vad;
 
 /// The canonical sample rate of the whole pipeline (what Whisper consumes).
